@@ -1,0 +1,42 @@
+name: CI/CD Review Filmes
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  ci-job:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Login no Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Build da imagem Docker
+        run: docker build -t tiagoferreira97/review-filmes-web:${{ github.sha }} ./02-review/src
+
+      - name: Push da imagem
+        run: docker push tiagoferreira97/review-filmes-web:${{ github.sha }}
+
+  deploy-to-k8s:
+    needs: ci-job  # Corrigido: agora está na indentação correta
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Atualizar imagem no manifesto
+        run: |
+          sed -i "s|image: tiagoferreira97/review-filmes-web:.*|image: tiagoferreira97/review-filmes-web:${{ github.sha }}|" ./02-review/k8s/deployment.yaml
+
+      - name: Configurar kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBECONFIG }}" > $HOME/.kube/config
+
+      - name: Deploy no Kubernetes
+        run: kubectl apply -f ./02-review/k8s/
