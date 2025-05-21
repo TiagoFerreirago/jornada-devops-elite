@@ -18,7 +18,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
       - name: Build da imagem Docker
-        run: docker build -t tiagoferreira97/review-filmes-web:${{ github.sha }} -f ./02-review/src
+        run: docker build -t tiagoferreira97/review-filmes-web:${{ github.sha }} -f ./02-review/src/Review-Filmes.Web/Dockerfile ./02-review/src
 
       - name: Push da imagem
         run: docker push tiagoferreira97/review-filmes-web:${{ github.sha }}
